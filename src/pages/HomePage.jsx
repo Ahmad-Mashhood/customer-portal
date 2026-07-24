@@ -1,8 +1,9 @@
-import { useState } from 'react'
+import { useState, useEffect } from 'react'
 import { useNavigate } from 'react-router-dom'
 import Icon from '../components/Icon'
 import BottomNav from '../components/BottomNav'
 import logo from '../assets/logo_transparent.png'
+import API from '../api'
 
 const MOCK_NOTIFICATIONS = [
   { id: 'n1', title: 'Order Dispatched 🏍️', message: 'Rider Alex is on his way with your Biryani!', time: '5 mins ago', read: false, icon: 'moped' },
@@ -10,7 +11,6 @@ const MOCK_NOTIFICATIONS = [
   { id: 'n3', title: 'Mega Deal 🎁', message: 'Get 50% off on your next pizza order from Pizza Max.', time: '1 day ago', read: true, icon: 'local_offer' }
 ]
 
-/* ── Data ────────────────────────────────────────────────────── */
 const CATEGORIES = [
   { emoji: '🍛', label: 'Biryani' },
   { emoji: '🍔', label: 'Fast Food' },
@@ -37,7 +37,7 @@ const DEALS = [
   },
 ]
 
-const RESTAURANTS = [
+const DEFAULT_RESTAURANTS = [
   {
     id: 'r1',
     name: 'Student Biryani',
@@ -110,8 +110,8 @@ function RestaurantCard({ restaurant, onClick }) {
       className="bg-white rounded-2xl overflow-hidden shadow-sm border border-[#e1bfb5]/30 cursor-pointer hover:shadow-md transition-shadow"
     >
       <div className="relative h-48">
-        <img src={img} alt={name} className="w-full h-full object-cover" />
-        <button className="absolute top-3 right-3 w-8 h-8 bg-white/80 backdrop-blur-sm rounded-full flex items-center justify-center" onClick={e => e.stopPropagation()}>
+        <img src={img || 'https://images.unsplash.com/photo-1563379091339-03b21ab4a4f8?w=600&q=80'} alt={name} className="w-full h-full object-cover" />
+        <button className="absolute top-3 right-[#3] top-3 right-3 w-8 h-8 bg-white/80 backdrop-blur-sm rounded-full flex items-center justify-center" onClick={e => e.stopPropagation()}>
           <Icon name="favorite" size={16} className="text-[#594139]" />
         </button>
         {badge && (
@@ -122,21 +122,21 @@ function RestaurantCard({ restaurant, onClick }) {
         <div className="flex justify-between items-start">
           <div>
             <h4 className="font-bold text-[#261814] text-lg">{name}</h4>
-            <p className="text-[#594139] text-xs mt-1">{tags}</p>
+            <p className="text-[#594139] text-xs mt-1">{tags || 'Pakistani • Fast Food'}</p>
           </div>
           <div className="bg-[#c98f00]/10 px-2 py-1 rounded-lg flex items-center gap-1">
             <Icon name="star" filled size={14} className="text-[#c98f00]" />
-            <span className="text-xs font-bold text-[#c98f00]">{rating}</span>
+            <span className="text-xs font-bold text-[#c98f00]">{rating || 4.5}</span>
           </div>
         </div>
         <div className="flex items-center gap-4 mt-4 border-t border-[#e1bfb5]/20 pt-4">
           <div className="flex items-center gap-1 text-[#594139]">
             <Icon name="schedule" size={16} />
-            <span className="text-[10px] font-semibold">{time}</span>
+            <span className="text-[10px] font-semibold">{time || '20-30 min'}</span>
           </div>
           <div className="flex items-center gap-1 text-[#594139]">
             <Icon name="moped" size={16} />
-            <span className="text-[10px] font-semibold">{delivery}</span>
+            <span className="text-[10px] font-semibold">{delivery || 'Rs. 50'}</span>
           </div>
         </div>
       </div>
@@ -149,6 +149,42 @@ export default function HomePage() {
   const navigate = useNavigate()
   const [showNotifications, setShowNotifications] = useState(false)
   const [notifications, setNotifications] = useState(MOCK_NOTIFICATIONS)
+  const [restaurants, setRestaurants] = useState([])
+  const [foods, setFoods] = useState([])
+  const [loading, setLoading] = useState(true)
+  const [error, setError] = useState(null)
+
+  useEffect(() => {
+    const fetchData = async () => {
+      setLoading(true)
+      try {
+        const [vRes, fRes] = await Promise.all([
+          API.get('/api/vendors').catch(() => ({ data: [] })),
+          API.get('/api/foods').catch(() => ({ data: [] }))
+        ])
+        
+        const mappedVendors = vRes.data.map(v => ({
+          id: v.id,
+          name: v.name,
+          tags: `${v.category || 'Restaurant'} • ${v.city || 'Vehari'}`,
+          rating: v.rating || 4.5,
+          time: '20-30 min',
+          delivery: 'Rs. 50',
+          badge: v.status === 'open' ? 'OPEN NOW' : 'CLOSED',
+          img: 'https://images.unsplash.com/photo-1563379091339-03b21ab4a4f8?w=600&q=80'
+        }))
+
+        setRestaurants(mappedVendors.length > 0 ? mappedVendors : DEFAULT_RESTAURANTS)
+        setFoods(fRes.data)
+      } catch (err) {
+        setError(err.message)
+        setRestaurants(DEFAULT_RESTAURANTS)
+      } finally {
+        setLoading(false)
+      }
+    }
+    fetchData()
+  }, [])
 
   const unreadCount = notifications.filter(n => !n.read).length
 
@@ -275,7 +311,7 @@ export default function HomePage() {
           </button>
         </div>
         <div className="flex flex-col gap-6">
-          {RESTAURANTS.map(r => (
+          {(restaurants.length > 0 ? restaurants : DEFAULT_RESTAURANTS).map(r => (
             <RestaurantCard
               key={r.id}
               restaurant={r}

@@ -1,20 +1,30 @@
-// Shared API utility for customer-portal
-// All requests proxy to http://localhost:5000 via Vite proxy
+import axios from 'axios'
 
-const BASE = '/api/customer';
+const API = axios.create({
+    baseURL: 'http://localhost:8000',
+    headers: {
+        'Content-Type': 'application/json'
+    }
+})
 
-const getHeaders = () => ({
-  'Content-Type': 'application/json',
-  Authorization: `Bearer ${localStorage.getItem('token') || ''}`,
-});
+API.interceptors.request.use((config) => {
+    const token = localStorage.getItem('token')
+    if (token) {
+        config.headers.Authorization = `Bearer ${token}`
+    }
+    return config
+})
 
-export const api = {
-  post: (path, body) =>
-    fetch(`${BASE}${path}`, { method: 'POST', headers: getHeaders(), body: JSON.stringify(body) }).then(r => r.json()),
-  get: (path) =>
-    fetch(`${BASE}${path}`, { headers: getHeaders() }).then(r => r.json()),
-  put: (path, body) =>
-    fetch(`${BASE}${path}`, { method: 'PUT', headers: getHeaders(), body: JSON.stringify(body) }).then(r => r.json()),
-  delete: (path) =>
-    fetch(`${BASE}${path}`, { method: 'DELETE', headers: getHeaders() }).then(r => r.json()),
-};
+API.interceptors.response.use(
+    (response) => response,
+    (error) => {
+        if (error.response?.status === 401) {
+            localStorage.removeItem('token')
+            localStorage.removeItem('user')
+            window.location.href = '/login'
+        }
+        return Promise.reject(error)
+    }
+)
+
+export default API

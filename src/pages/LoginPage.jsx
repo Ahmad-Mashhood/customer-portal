@@ -2,6 +2,7 @@ import { useState, useRef, useEffect } from 'react'
 import { useNavigate, Link } from 'react-router-dom'
 import Icon from '../components/Icon'
 import logo from '../assets/logo_transparent.png'
+import API from '../api'
 
 /* ── Google SVG ──────────────────────────────────────────────── */
 const GoogleSVG = () => (
@@ -64,17 +65,53 @@ function OTPView({ onBack }) {
 }
 
 /* ── Login Form ──────────────────────────────────────────────── */
-function LoginForm({ onSubmit }) {
+function LoginForm({ onSuccess }) {
+  const [email, setEmail] = useState('')
+  const [password, setPassword] = useState('')
   const [showPw, setShowPw] = useState(false)
+  const [loading, setLoading] = useState(false)
+  const [error, setError] = useState('')
+  const navigate = useNavigate()
+
+  const handleLogin = async (e) => {
+    e.preventDefault()
+    setLoading(true)
+    setError('')
+    try {
+      const res = await API.post('/api/auth/login', { email, password })
+      const { token, user } = res.data
+      localStorage.setItem('token', token)
+      localStorage.setItem('user', JSON.stringify(user || { email, role: 'customer' }))
+      if (onSuccess) onSuccess()
+      else navigate('/home')
+    } catch (err) {
+      setError(err.response?.data?.detail || 'Invalid email or password')
+    } finally {
+      setLoading(false)
+    }
+  }
+
   return (
-    <div className="space-y-5">
+    <form onSubmit={handleLogin} className="space-y-5">
+      {error && (
+        <div className="p-3 bg-red-50 text-red-600 text-[14px] rounded-xl text-center font-medium">
+          {error}
+        </div>
+      )}
       <div className="space-y-4">
         {/* Email */}
         <div className="space-y-1.5">
           <label className="text-[14px] font-semibold text-[#261814] ml-1">Email or Phone</label>
           <div className="relative group">
             <Icon name="alternate_email" className="absolute left-4 top-1/2 -translate-y-1/2 text-[#8d7168] group-focus-within:text-[#ab3500] transition-colors" />
-            <input className="w-full pl-12 pr-4 py-4 bg-[#fff1ed] border-none rounded-xl text-[16px] focus:ring-2 focus:ring-[#ab3500]/20 transition-all placeholder:text-[#8d7168]/50" placeholder="genie@magic.com" type="text" />
+            <input
+              className="w-full pl-12 pr-4 py-4 bg-[#fff1ed] border-none rounded-xl text-[16px] focus:ring-2 focus:ring-[#ab3500]/20 transition-all placeholder:text-[#8d7168]/50"
+              placeholder="genie@magic.com"
+              type="text"
+              value={email}
+              onChange={e => setEmail(e.target.value)}
+              required
+            />
           </div>
         </div>
         {/* Password */}
@@ -85,51 +122,144 @@ function LoginForm({ onSubmit }) {
           </div>
           <div className="relative group">
             <Icon name="lock" className="absolute left-4 top-1/2 -translate-y-1/2 text-[#8d7168] group-focus-within:text-[#ab3500] transition-colors" />
-            <input className="w-full pl-12 pr-12 py-4 bg-[#fff1ed] border-none rounded-xl text-[16px] focus:ring-2 focus:ring-[#ab3500]/20 transition-all placeholder:text-[#8d7168]/50" placeholder="••••••••" type={showPw ? 'text' : 'password'} />
+            <input
+              className="w-full pl-12 pr-12 py-4 bg-[#fff1ed] border-none rounded-xl text-[16px] focus:ring-2 focus:ring-[#ab3500]/20 transition-all placeholder:text-[#8d7168]/50"
+              placeholder="••••••••"
+              type={showPw ? 'text' : 'password'}
+              value={password}
+              onChange={e => setPassword(e.target.value)}
+              required
+            />
             <button type="button" onClick={() => setShowPw(v => !v)} className="absolute right-4 top-1/2 -translate-y-1/2 text-[#8d7168] hover:text-[#261814]">
               <Icon name={showPw ? 'visibility_off' : 'visibility'} />
             </button>
           </div>
         </div>
       </div>
-      <button onClick={onSubmit} className="w-full py-4 bg-[#ab3500] text-white rounded-full text-[20px] font-semibold shadow-lg hover:bg-[#ff6b35] transition-all active:scale-95">
-        Log In
+      <button type="submit" disabled={loading} className="w-full py-4 bg-[#ab3500] text-white rounded-full text-[20px] font-semibold shadow-lg hover:bg-[#ff6b35] transition-all active:scale-95 disabled:opacity-50">
+        {loading ? 'Logging In...' : 'Log In'}
       </button>
-    </div>
+    </form>
   )
 }
 
 /* ── Sign Up Form ────────────────────────────────────────────── */
-function SignUpForm({ onSubmit }) {
+function SignUpForm({ onSuccess }) {
+  const [name, setName] = useState('')
+  const [email, setEmail] = useState('')
+  const [password, setPassword] = useState('')
+  const [phone, setPhone] = useState('')
+  const [loading, setLoading] = useState(false)
+  const [error, setError] = useState('')
+  const navigate = useNavigate()
+
+  const handleSignUp = async (e) => {
+    e.preventDefault()
+    setLoading(true)
+    setError('')
+    try {
+      const res = await API.post('/api/auth/register', {
+        name,
+        email,
+        password,
+        role: 'customer',
+        phone
+      })
+      const { token, user } = res.data
+      localStorage.setItem('token', token)
+      localStorage.setItem('user', JSON.stringify(user || { name, email, role: 'customer' }))
+      if (onSuccess) onSuccess()
+      else navigate('/home')
+    } catch (err) {
+      setError(err.response?.data?.detail || 'Registration failed')
+    } finally {
+      setLoading(false)
+    }
+  }
+
   return (
-    <div className="space-y-5">
+    <form onSubmit={handleSignUp} className="space-y-5">
+      {error && (
+        <div className="p-3 bg-red-50 text-red-600 text-[14px] rounded-xl text-center font-medium">
+          {error}
+        </div>
+      )}
       <div className="space-y-4">
-        {[
-          { label: 'Full Name',       icon: 'person', type: 'text',     placeholder: 'Hungry Genie' },
-          { label: 'Phone or Email',  icon: 'mail',   type: 'text',     placeholder: 'genie@magic.com' },
-          { label: 'Password',        icon: 'lock',   type: 'password', placeholder: 'Min. 8 characters' },
-        ].map(({ label, icon, type, placeholder }) => (
-          <div key={label} className="space-y-1.5">
-            <label className="text-[14px] font-semibold text-[#261814] ml-1">{label}</label>
-            <div className="relative group">
-              <Icon name={icon} className="absolute left-4 top-1/2 -translate-y-1/2 text-[#8d7168] group-focus-within:text-[#ab3500] transition-colors" />
-              <input className="w-full pl-12 pr-4 py-4 bg-[#fff1ed] border-none rounded-xl text-[16px] focus:ring-2 focus:ring-[#ab3500]/20 transition-all placeholder:text-[#8d7168]/50" placeholder={placeholder} type={type} />
-            </div>
+        {/* Full Name */}
+        <div className="space-y-1.5">
+          <label className="text-[14px] font-semibold text-[#261814] ml-1">Full Name</label>
+          <div className="relative group">
+            <Icon name="person" className="absolute left-4 top-1/2 -translate-y-1/2 text-[#8d7168] group-focus-within:text-[#ab3500] transition-colors" />
+            <input
+              className="w-full pl-12 pr-4 py-4 bg-[#fff1ed] border-none rounded-xl text-[16px] focus:ring-2 focus:ring-[#ab3500]/20 transition-all placeholder:text-[#8d7168]/50"
+              placeholder="Hungry Genie"
+              type="text"
+              value={name}
+              onChange={e => setName(e.target.value)}
+              required
+            />
           </div>
-        ))}
+        </div>
+
+        {/* Email */}
+        <div className="space-y-1.5">
+          <label className="text-[14px] font-semibold text-[#261814] ml-1">Email</label>
+          <div className="relative group">
+            <Icon name="mail" className="absolute left-4 top-1/2 -translate-y-1/2 text-[#8d7168] group-focus-within:text-[#ab3500] transition-colors" />
+            <input
+              className="w-full pl-12 pr-4 py-4 bg-[#fff1ed] border-none rounded-xl text-[16px] focus:ring-2 focus:ring-[#ab3500]/20 transition-all placeholder:text-[#8d7168]/50"
+              placeholder="genie@magic.com"
+              type="email"
+              value={email}
+              onChange={e => setEmail(e.target.value)}
+              required
+            />
+          </div>
+        </div>
+
+        {/* Phone */}
+        <div className="space-y-1.5">
+          <label className="text-[14px] font-semibold text-[#261814] ml-1">Phone</label>
+          <div className="relative group">
+            <Icon name="phone" className="absolute left-4 top-1/2 -translate-y-1/2 text-[#8d7168] group-focus-within:text-[#ab3500] transition-colors" />
+            <input
+              className="w-full pl-12 pr-4 py-4 bg-[#fff1ed] border-none rounded-xl text-[16px] focus:ring-2 focus:ring-[#ab3500]/20 transition-all placeholder:text-[#8d7168]/50"
+              placeholder="+923001234567"
+              type="text"
+              value={phone}
+              onChange={e => setPhone(e.target.value)}
+            />
+          </div>
+        </div>
+
+        {/* Password */}
+        <div className="space-y-1.5">
+          <label className="text-[14px] font-semibold text-[#261814] ml-1">Password</label>
+          <div className="relative group">
+            <Icon name="lock" className="absolute left-4 top-1/2 -translate-y-1/2 text-[#8d7168] group-focus-within:text-[#ab3500] transition-colors" />
+            <input
+              className="w-full pl-12 pr-4 py-4 bg-[#fff1ed] border-none rounded-xl text-[16px] focus:ring-2 focus:ring-[#ab3500]/20 transition-all placeholder:text-[#8d7168]/50"
+              placeholder="Min. 8 characters"
+              type="password"
+              value={password}
+              onChange={e => setPassword(e.target.value)}
+              required
+            />
+          </div>
+        </div>
       </div>
-      <button onClick={onSubmit} className="w-full py-4 bg-[#ab3500] text-white rounded-full text-[20px] font-semibold shadow-lg hover:bg-[#ff6b35] transition-all active:scale-95">
-        Create Account
+      <button type="submit" disabled={loading} className="w-full py-4 bg-[#ab3500] text-white rounded-full text-[20px] font-semibold shadow-lg hover:bg-[#ff6b35] transition-all active:scale-95 disabled:opacity-50">
+        {loading ? 'Creating Account...' : 'Create Account'}
       </button>
-    </div>
+    </form>
   )
 }
 
 /* ── LoginPage ───────────────────────────────────────────────── */
 export default function LoginPage() {
-  const [tab,     setTab]     = useState('login')   // 'login' | 'signup'
+  const [tab, setTab] = useState('login') // 'login' | 'signup'
   const [showOtp, setShowOtp] = useState(false)
-  const navigate              = useNavigate()
+  const navigate = useNavigate()
 
   useEffect(() => {
     const handleAuthMessage = (event) => {
@@ -215,7 +345,7 @@ export default function LoginPage() {
                   className="absolute top-1.5 bottom-1.5 w-[calc(50%-6px)] bg-white shadow-sm rounded-full transition-all duration-300 ease-out"
                   style={{ left: tab === 'login' ? '6px' : 'calc(50%)' }}
                 />
-                <button onClick={() => setTab('login')}  className={`relative z-10 flex-1 py-3 text-[14px] font-semibold transition-colors ${tab === 'login' ? 'text-[#ab3500]' : 'text-[#594139]'}`}>Login</button>
+                <button onClick={() => setTab('login')} className={`relative z-10 flex-1 py-3 text-[14px] font-semibold transition-colors ${tab === 'login' ? 'text-[#ab3500]' : 'text-[#594139]'}`}>Login</button>
                 <button onClick={() => setTab('signup')} className={`relative z-10 flex-1 py-3 text-[14px] font-semibold transition-colors ${tab === 'signup' ? 'text-[#ab3500]' : 'text-[#594139]'}`}>Sign Up</button>
               </div>
             )}
@@ -225,9 +355,9 @@ export default function LoginPage() {
               {showOtp ? (
                 <OTPView onBack={() => setShowOtp(false)} />
               ) : tab === 'login' ? (
-                <LoginForm onSubmit={() => setShowOtp(true)} />
+                <LoginForm onSuccess={() => navigate('/home')} />
               ) : (
-                <SignUpForm onSubmit={() => setShowOtp(true)} />
+                <SignUpForm onSuccess={() => navigate('/home')} />
               )}
 
               {!showOtp && (
