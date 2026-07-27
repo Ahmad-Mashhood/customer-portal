@@ -1,14 +1,47 @@
-import { useState } from 'react'
+import { useState, useEffect } from 'react'
 import { useNavigate } from 'react-router-dom'
 import Icon from '../components/Icon'
 import BottomNav from '../components/BottomNav'
 import { useCart } from '../context/CartContext'
 import { auth } from '../firebase'
 import { signOut } from 'firebase/auth'
+import API from '../api'
 
 export default function ProfilePage() {
   const navigate = useNavigate()
   const { clearCart } = useCart()
+
+  const [user, setUser] = useState(() => {
+    try {
+      const u = localStorage.getItem('user')
+      return u ? JSON.parse(u) : null
+    } catch (e) {
+      return null
+    }
+  })
+
+  const [name, setName] = useState(() => user?.name || 'Food Genie Customer')
+  const [email, setEmail] = useState(() => user?.email || 'customer@foodgenie.com')
+  const [phone, setPhone] = useState(() => user?.phone || 'No phone added')
+
+  useEffect(() => {
+    const fetchMe = async () => {
+      try {
+        const res = await API.get('/api/auth/me')
+        if (res.data) {
+          const fresh = res.data
+          setName(fresh.name || 'Food Genie Customer')
+          setEmail(fresh.email || 'customer@foodgenie.com')
+          setPhone(fresh.phone || 'No phone added')
+          setUser(fresh)
+          localStorage.setItem('user', JSON.stringify(fresh))
+        }
+      } catch (err) {
+        // Fallback to localStorage user
+      }
+    }
+    fetchMe()
+  }, [])
 
   const [aiRecs, setAiRecs] = useState(() => {
     const saved = localStorage.getItem('ai_recommendations')
@@ -25,8 +58,8 @@ export default function ProfilePage() {
   }
 
   const [addresses, setAddresses] = useState([
-    { id: 'addr1', label: 'Home', text: 'Plot 42, Sector F-7/2, Street 15, Islamabad', icon: 'home' },
-    { id: 'addr2', label: 'Work', text: 'Arfa Software Technology Park, Ferozepur Rd, Lahore', icon: 'business' },
+    { id: 'addr1', label: 'Home', text: 'Jinnah Shaheed Road, Vehari, Punjab', icon: 'home' },
+    { id: 'addr2', label: 'Work', text: 'Club Road, Vehari, Punjab', icon: 'business' },
   ])
 
   const [editingId, setEditingId] = useState(null)
@@ -48,9 +81,6 @@ export default function ProfilePage() {
     setEditText('')
   }
 
-  const [name, setName] = useState('Ahmad Mshhood')
-  const [phone, setPhone] = useState('+92 300 1234567')
-
   const [isEditingProfile, setIsEditingProfile] = useState(false)
   const [editName, setEditName] = useState('')
   const [editPhone, setEditPhone] = useState('')
@@ -64,6 +94,9 @@ export default function ProfilePage() {
   const handleSaveProfile = () => {
     setName(editName)
     setPhone(editPhone)
+    const updatedUser = { ...(user || {}), name: editName, phone: editPhone, email }
+    setUser(updatedUser)
+    localStorage.setItem('user', JSON.stringify(updatedUser))
     setIsEditingProfile(false)
   }
 
@@ -105,8 +138,8 @@ export default function ProfilePage() {
                     placeholder="Name"
                     autoFocus
                   />
-                  <p className="text-[13px] text-[#594139] px-2.5 py-1 select-none opacity-60">
-                    ahmadmashhood.bcs018@gmail.com
+                  <p className="text-[13px] text-[#594139] px-2.5 py-1 select-none opacity-60 truncate">
+                    {email}
                   </p>
                   <input
                     type="text"
@@ -119,7 +152,7 @@ export default function ProfilePage() {
               ) : (
                 <>
                   <h2 className="font-extrabold text-[#261814] text-lg truncate">{name}</h2>
-                  <p className="text-[13px] text-[#594139] mt-0.5 truncate">ahmadmashhood.bcs018@gmail.com</p>
+                  <p className="text-[13px] text-[#594139] mt-0.5 truncate">{email}</p>
                   <p className="text-[12px] text-[#8d7168] font-semibold mt-1">{phone}</p>
                 </>
               )}
@@ -158,153 +191,110 @@ export default function ProfilePage() {
         {/* Saved Addresses */}
         <section className="space-y-3">
           <h3 className="text-sm font-bold text-[#594139] uppercase tracking-wider pl-1">Saved Addresses</h3>
-          <div className="bg-white rounded-2xl border border-[#e1bfb5]/30 shadow-sm overflow-hidden divide-y divide-[#e1bfb5]/20">
-            {addresses.map(addr => {
-              const isEditing = editingId === addr.id
-              return (
-                <div key={addr.id} className="p-4 flex justify-between items-center gap-4">
-                  <div className="flex gap-3 items-center min-w-0 flex-1">
-                    <div className="w-10 h-10 rounded-full bg-[#fff1ed] flex items-center justify-center text-[#ab3500] flex-shrink-0">
-                      <Icon name={addr.icon} size={20} />
-                    </div>
-                    <div className="min-w-0 flex-1">
-                      <p className="font-bold text-sm text-[#261814]">{addr.label}</p>
-                      {isEditing ? (
+          <div className="space-y-2.5">
+            {addresses.map(addr => (
+              <div key={addr.id} className="bg-white p-4 rounded-2xl border border-[#e1bfb5]/30 shadow-sm flex items-start justify-between gap-3">
+                <div className="flex items-start gap-3 flex-1 min-w-0">
+                  <div className="p-2 bg-[#fff1ed] rounded-xl text-[#ab3500] mt-0.5 flex-shrink-0">
+                    <Icon name={addr.icon} size={18} />
+                  </div>
+                  <div className="flex-1 min-w-0">
+                    <span className="text-xs font-extrabold text-[#ab3500] uppercase tracking-wider">{addr.label}</span>
+                    {editingId === addr.id ? (
+                      <div className="mt-1 flex gap-2 items-center">
                         <input
                           type="text"
                           value={editText}
                           onChange={(e) => setEditText(e.target.value)}
-                          className="w-full mt-1 bg-[#fff1ed] border border-[#e1bfb5]/60 rounded-lg px-2.5 py-1 text-xs text-[#261814] focus:ring-1 focus:ring-[#ab3500] outline-none"
+                          className="flex-1 bg-[#fff1ed] border border-[#e1bfb5]/60 rounded-lg px-2.5 py-1 text-xs text-[#261814] focus:ring-1 focus:ring-[#ab3500] outline-none"
                           autoFocus
                         />
-                      ) : (
-                        <p className="text-xs text-[#594139] mt-0.5 truncate" title={addr.text}>{addr.text}</p>
-                      )}
-                    </div>
-                  </div>
-                  <div className="flex items-center gap-1 flex-shrink-0">
-                    {isEditing ? (
-                      <>
                         <button 
-                          onClick={() => handleSaveAddress(addr.id)} 
-                          className="text-[#2e7d32] hover:bg-green-50 p-1.5 rounded-full cursor-pointer transition-colors"
-                          title="Save"
+                          onClick={() => handleSaveAddress(addr.id)}
+                          className="text-[#2e7d32] hover:bg-green-50 p-1 rounded-md transition-colors"
                         >
                           <Icon name="check" size={16} />
                         </button>
                         <button 
-                          onClick={handleCancelEdit} 
-                          className="text-[#b7102a] hover:bg-red-50 p-1.5 rounded-full cursor-pointer transition-colors"
-                          title="Cancel"
+                          onClick={handleCancelEdit}
+                          className="text-[#b7102a] hover:bg-red-50 p-1 rounded-md transition-colors"
                         >
                           <Icon name="close" size={16} />
                         </button>
-                      </>
+                      </div>
                     ) : (
-                      <button 
-                        onClick={() => handleStartEdit(addr)}
-                        className="text-[#8d7168] hover:text-[#ab3500] hover:bg-[#fff1ed] p-1.5 rounded-full cursor-pointer transition-colors"
-                        title="Edit Address"
-                      >
-                        <Icon name="edit" size={16} />
-                      </button>
+                      <p className="text-xs text-[#261814] font-medium mt-0.5 leading-relaxed">{addr.text}</p>
                     )}
                   </div>
                 </div>
-              )
-            })}
-          </div>
-        </section>
-
-        {/* Preferences / Settings */}
-        <section className="space-y-3">
-          <h3 className="text-sm font-bold text-[#594139] uppercase tracking-wider pl-1">App Settings</h3>
-          <div className="bg-white rounded-2xl border border-[#e1bfb5]/30 shadow-sm overflow-hidden divide-y divide-[#e1bfb5]/20">
-            {/* AI Recs Switch */}
-            <div className="p-4 flex justify-between items-center">
-              <div className="flex gap-3 items-center">
-                <div className="w-10 h-10 rounded-full bg-[#ffdea9] flex items-center justify-center text-[#7d5800]">
-                  <Icon name="auto_awesome" filled size={20} />
-                </div>
-                <div>
-                  <p className="font-bold text-sm text-[#261814]">AI Recommendations</p>
-                  <p className="text-[11px] text-[#594139] mt-0.5">Use order history to customize foods</p>
-                </div>
-              </div>
-              <button 
-                onClick={handleToggleAiRecs}
-                className={`w-12 h-6 rounded-full p-1 transition-colors duration-300 cursor-pointer ${
-                  aiRecs ? 'bg-[#ab3500]' : 'bg-[#eed5cd]'
-                }`}
-              >
-                <div 
-                  className={`bg-white w-4 h-4 rounded-full transition-transform duration-300 ${
-                    aiRecs ? 'translate-x-6' : 'translate-x-0'
-                  }`} 
-                />
-              </button>
-            </div>
-
-            {/* Notification Switch */}
-            <div className="p-4 flex justify-between items-center">
-              <div className="flex gap-3 items-center">
-                <div className="w-10 h-10 rounded-full bg-[#fde3db] flex items-center justify-center text-[#ab3500]">
-                  <Icon name="notifications" size={20} />
-                </div>
-                <div>
-                  <p className="font-bold text-sm text-[#261814]">Push Notifications</p>
-                  <p className="text-[11px] text-[#594139] mt-0.5">Order updates & hot deals alerts</p>
-                </div>
-              </div>
-              <button 
-                onClick={() => setPushNotif(!pushNotif)}
-                className={`w-12 h-6 rounded-full p-1 transition-colors duration-300 cursor-pointer ${
-                  pushNotif ? 'bg-[#ab3500]' : 'bg-[#eed5cd]'
-                }`}
-              >
-                <div 
-                  className={`bg-white w-4 h-4 rounded-full transition-transform duration-300 ${
-                    pushNotif ? 'translate-x-6' : 'translate-x-0'
-                  }`} 
-                />
-              </button>
-            </div>
-          </div>
-        </section>
-
-        {/* Legal & Help */}
-        <section className="space-y-3">
-          <h3 className="text-sm font-bold text-[#594139] uppercase tracking-wider pl-1">Information</h3>
-          <div className="bg-white rounded-2xl border border-[#e1bfb5]/30 shadow-sm overflow-hidden divide-y divide-[#e1bfb5]/20">
-            {[
-              { label: 'Privacy Policy', route: '/privacy', icon: 'security' },
-              { label: 'Terms of Service', route: '/terms', icon: 'gavel' },
-            ].map(item => (
-              <div 
-                key={item.label} 
-                onClick={() => navigate(item.route)}
-                className="p-4 flex justify-between items-center hover:bg-[#fff1ed]/40 cursor-pointer transition-colors"
-              >
-                <div className="flex gap-3 items-center">
-                  <div className="w-10 h-10 rounded-full bg-[#fff1ed] flex items-center justify-center text-[#594139]">
-                    <Icon name={item.icon} size={20} />
-                  </div>
-                  <span className="font-semibold text-sm text-[#261814]">{item.label}</span>
-                </div>
-                <Icon name="chevron_right" size={20} className="text-[#8d7168]" />
+                {editingId !== addr.id && (
+                  <button 
+                    onClick={() => handleStartEdit(addr)}
+                    className="text-[#8d7168] hover:text-[#ab3500] p-1 rounded-lg transition-colors flex-shrink-0"
+                    title="Edit Address"
+                  >
+                    <Icon name="edit" size={16} />
+                  </button>
+                )}
               </div>
             ))}
           </div>
         </section>
 
-        {/* Logout Button */}
-        <button
-          onClick={handleLogout}
-          className="w-full bg-[#b7102a] text-white py-4 rounded-full text-base font-bold shadow-md hover:bg-[#db313f] transition-all active:scale-[0.98] cursor-pointer flex items-center justify-center gap-2"
-        >
-          <Icon name="logout" size={20} />
-          Log Out
-        </button>
+        {/* Preferences & Settings */}
+        <section className="space-y-3">
+          <h3 className="text-sm font-bold text-[#594139] uppercase tracking-wider pl-1">Preferences</h3>
+          <div className="bg-white rounded-2xl border border-[#e1bfb5]/30 shadow-sm divide-y divide-[#e1bfb5]/20 overflow-hidden">
+            {/* AI Recommendation Toggle */}
+            <div className="p-4 flex items-center justify-between gap-4">
+              <div className="flex items-center gap-3">
+                <div className="p-2 bg-[#fff1ed] rounded-xl text-[#ab3500]">
+                  <Icon name="auto_awesome" size={18} />
+                </div>
+                <div>
+                  <h4 className="text-sm font-bold text-[#261814]">AI Health Recommendations</h4>
+                  <p className="text-xs text-[#594139]">Personalized food suggestions based on your diet</p>
+                </div>
+              </div>
+              <button 
+                onClick={handleToggleAiRecs}
+                className={`w-12 h-6 rounded-full transition-colors relative flex items-center px-0.5 cursor-pointer ${aiRecs ? 'bg-[#ab3500]' : 'bg-[#e1bfb5]/50'}`}
+              >
+                <div className={`w-5 h-5 bg-white rounded-full shadow-md transform transition-transform ${aiRecs ? 'translate-x-6' : 'translate-x-0'}`} />
+              </button>
+            </div>
+
+            {/* Push Notifications Toggle */}
+            <div className="p-4 flex items-center justify-between gap-4">
+              <div className="flex items-center gap-3">
+                <div className="p-2 bg-[#fff1ed] rounded-xl text-[#ab3500]">
+                  <Icon name="notifications" size={18} />
+                </div>
+                <div>
+                  <h4 className="text-sm font-bold text-[#261814]">Push Notifications</h4>
+                  <p className="text-xs text-[#594139]">Order status updates and exclusive genie deals</p>
+                </div>
+              </div>
+              <button 
+                onClick={() => setPushNotif(prev => !prev)}
+                className={`w-12 h-6 rounded-full transition-colors relative flex items-center px-0.5 cursor-pointer ${pushNotif ? 'bg-[#ab3500]' : 'bg-[#e1bfb5]/50'}`}
+              >
+                <div className={`w-5 h-5 bg-white rounded-full shadow-md transform transition-transform ${pushNotif ? 'translate-x-6' : 'translate-x-0'}`} />
+              </button>
+            </div>
+          </div>
+        </section>
+
+        {/* Account Actions */}
+        <section className="pt-2">
+          <button 
+            onClick={handleLogout}
+            className="w-full py-4 bg-white border border-[#b7102a]/30 text-[#b7102a] rounded-2xl font-bold text-sm shadow-sm hover:bg-red-50 transition-colors flex items-center justify-center gap-2 cursor-pointer active:scale-95"
+          >
+            <Icon name="logout" size={18} />
+            Log Out
+          </button>
+        </section>
       </main>
 
       <BottomNav />
