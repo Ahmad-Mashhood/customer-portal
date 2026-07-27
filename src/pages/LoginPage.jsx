@@ -3,6 +3,7 @@ import { useNavigate, Link } from 'react-router-dom'
 import Icon from '../components/Icon'
 import logo from '../assets/logo_transparent.png'
 import API from '../api'
+import { loginWithGoogle } from '../api/googleAuth'
 
 /* ── Google SVG ──────────────────────────────────────────────── */
 const GoogleSVG = () => (
@@ -259,6 +260,8 @@ function SignUpForm({ onSuccess }) {
 export default function LoginPage() {
   const [tab, setTab] = useState('login') // 'login' | 'signup'
   const [showOtp, setShowOtp] = useState(false)
+  const [googleLoading, setGoogleLoading] = useState(false)
+  const [googleError, setGoogleError] = useState(null)
   const navigate = useNavigate()
 
   useEffect(() => {
@@ -275,7 +278,24 @@ export default function LoginPage() {
     return () => window.removeEventListener('message', handleAuthMessage)
   }, [navigate])
 
+  const handleGoogleLogin = async () => {
+    setGoogleLoading(true)
+    setGoogleError(null)
+    try {
+      await loginWithGoogle('customer')
+      navigate('/home')
+    } catch (err) {
+      setGoogleError(err.message || 'Google login failed')
+    } finally {
+      setGoogleLoading(false)
+    }
+  }
+
   const handleSocialLogin = (provider) => {
+    if (provider === 'google') {
+      handleGoogleLogin()
+      return
+    }
     const width = 500
     const height = 600
     const left = window.screenX + (window.outerWidth - width) / 2
@@ -368,14 +388,27 @@ export default function LoginPage() {
                     <span className="text-[12px] font-bold text-[#8d7168] uppercase tracking-widest">or</span>
                     <div className="h-px flex-1 bg-[#e1bfb5]/30" />
                   </div>
+                  {googleError && (
+                    <div className="p-3 bg-red-50 text-red-600 text-[13px] rounded-xl text-center font-medium">
+                      {googleError}
+                    </div>
+                  )}
                   {/* Social */}
                   <div className="grid grid-cols-2 gap-4">
                     <button
-                      onClick={() => handleSocialLogin('google')}
-                      className="flex items-center justify-center gap-2 py-3.5 bg-white border border-[#e1bfb5]/50 rounded-full hover:bg-[#fff1ed] transition-colors active:scale-95 cursor-pointer"
+                      onClick={handleGoogleLogin}
+                      disabled={googleLoading}
+                      className="flex items-center justify-center gap-2 py-3.5 bg-white border border-[#e1bfb5]/50 rounded-full hover:bg-[#fff1ed] transition-colors active:scale-95 cursor-pointer disabled:opacity-50"
                     >
-                      <GoogleSVG />
-                      <span className="text-[14px] font-semibold text-slate-800">Google</span>
+                      <img
+                        src="https://developers.google.com/identity/images/g-logo.png"
+                        width="20"
+                        height="20"
+                        alt="Google"
+                      />
+                      <span className="text-[14px] font-semibold text-slate-800">
+                        {googleLoading ? 'Signing in...' : 'Google'}
+                      </span>
                     </button>
                     <button
                       onClick={() => handleSocialLogin('facebook')}

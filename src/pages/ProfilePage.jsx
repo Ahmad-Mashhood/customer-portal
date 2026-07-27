@@ -3,6 +3,8 @@ import { useNavigate } from 'react-router-dom'
 import Icon from '../components/Icon'
 import BottomNav from '../components/BottomNav'
 import { useCart } from '../context/CartContext'
+import { auth } from '../firebase'
+import { signOut } from 'firebase/auth'
 
 export default function ProfilePage() {
   const navigate = useNavigate()
@@ -65,10 +67,16 @@ export default function ProfilePage() {
     setIsEditingProfile(false)
   }
 
-  const handleLogout = () => {
+  const handleLogout = async () => {
+    try {
+      await signOut(auth)
+    } catch (e) {
+      // ignore
+    }
     localStorage.removeItem('token')
+    localStorage.removeItem('user')
     clearCart()
-    navigate('/login')
+    window.location.href = '/login'
   }
 
   return (
