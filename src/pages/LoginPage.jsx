@@ -313,29 +313,29 @@ export default function LoginPage() {
       <div className="w-full max-w-7xl mx-auto flex flex-col lg:flex-row bg-[#fff8f6] rounded-[32px] overflow-hidden shadow-2xl lg:h-[800px]">
 
         {/* ── Branding Panel (desktop only) ──────────────────── */}
-        <div className="hidden lg:flex lg:w-1/2 relative bg-[#ff6b35] p-20 flex-col justify-between overflow-hidden">
+        <div className="hidden lg:flex lg:w-1/2 relative bg-[#ff6b35] p-10 xl:p-14 flex-col justify-between overflow-hidden">
           <div className="absolute inset-0 opacity-20 pointer-events-none">
             <div className="absolute -top-24 -left-24 w-96 h-96 bg-[#ab3500] rounded-full blur-[100px]" />
             <div className="absolute -bottom-24 -right-24 w-96 h-96 bg-[#b7102a] rounded-full blur-[100px]" />
           </div>
           <div className="relative z-10">
-            <div className="flex items-center gap-3 mb-12">
+            <div className="flex items-center gap-3 mb-8">
               <div className="w-14 h-14 bg-white rounded-2xl p-2 shadow-sm flex items-center justify-center border border-white/20">
                 <img src={logo} alt="Food Genie" className="w-full h-full object-contain" />
               </div>
-              <h1 className="text-[40px] font-extrabold text-white tracking-tight">Food Genie</h1>
+              <h1 className="text-[36px] font-extrabold text-white tracking-tight">Food Genie</h1>
             </div>
-            <h2 className="text-[32px] font-bold text-white max-w-md leading-tight">
+            <h2 className="text-[28px] font-bold text-white leading-snug">
               Magical flavors, delivered to your doorstep in a blink.
             </h2>
           </div>
           <div className="relative z-10 my-4">
-            <div className="w-72 h-72 mx-auto rounded-3xl overflow-hidden shadow-2xl transform -rotate-2 hover:rotate-0 transition-transform duration-500 bg-white flex items-center justify-center p-6 border border-[#e1bfb5]/10">
+            <div className="w-64 h-64 mx-auto rounded-3xl overflow-hidden shadow-2xl transform -rotate-2 hover:rotate-0 transition-transform duration-500 bg-white flex items-center justify-center p-6 border border-[#e1bfb5]/10">
               <img src={logo} alt="Food Genie Logo" className="w-full h-full object-contain" />
             </div>
           </div>
-          <div className="relative z-10 mt-6">
-            <p className="text-[18px] text-white/80">Join 1M+ food lovers enjoying the genie experience.</p>
+          <div className="relative z-10 mt-4">
+            <p className="text-[16px] text-white/80">Join 1M+ food lovers enjoying the genie experience.</p>
           </div>
         </div>
 
