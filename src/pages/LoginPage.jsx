@@ -344,18 +344,20 @@ export default function LoginPage() {
           <div className="w-full max-w-[420px] space-y-8">
 
             {/* Header */}
-            <div className="text-center lg:text-left">
-              <div className="lg:hidden flex justify-center mb-6">
-                <div className="w-16 h-16 bg-white rounded-2xl p-2 shadow-sm flex items-center justify-center border border-[#e1bfb5]/20">
+            <div className="text-left">
+              <div className="flex items-center gap-3 mb-4">
+                <div className="w-12 h-12 bg-white rounded-2xl p-2 shadow-sm flex items-center justify-center border border-[#e1bfb5]/20 flex-shrink-0">
                   <img src={logo} alt="Food Genie" className="w-full h-full object-contain" />
                 </div>
+                <div>
+                  <h3 className="text-[22px] font-bold text-[#261814] leading-tight">
+                    {showOtp ? 'Verify Identity' : tab === 'login' ? 'Welcome Back!' : 'Create Account'}
+                  </h3>
+                  <p className="text-[14px] text-[#594139] mt-0.5">
+                    {showOtp ? '' : tab === 'login' ? 'Enter your details to satisfy your cravings.' : 'Start your magical culinary journey today.'}
+                  </p>
+                </div>
               </div>
-              <h3 className="text-[24px] font-bold text-[#261814]">
-                {showOtp ? 'Verify Identity' : tab === 'login' ? 'Welcome Back!' : 'Create Account'}
-              </h3>
-              <p className="text-[16px] text-[#594139] mt-2">
-                {showOtp ? '' : tab === 'login' ? 'Enter your details to satisfy your cravings.' : 'Start your magical culinary journey today.'}
-              </p>
             </div>
 
             {/* Tab toggle */}
