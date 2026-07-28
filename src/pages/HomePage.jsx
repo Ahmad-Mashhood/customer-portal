@@ -2,119 +2,62 @@ import { useState, useEffect } from 'react'
 import { useNavigate } from 'react-router-dom'
 import Icon from '../components/Icon'
 import BottomNav from '../components/BottomNav'
-import logo from '../assets/logo_transparent.png'
 import API from '../api'
 
 const CATEGORIES = [
-  { emoji: '🍛', label: 'Biryani' },
-  { emoji: '🍔', label: 'Fast Food' },
-  { emoji: '🥘', label: 'Desi' },
-  { emoji: '🥢', label: 'Chinese' },
-  { emoji: '🥗', label: 'Healthy' },
-  { emoji: '🍰', label: 'Desserts' },
-  { emoji: '🍕', label: 'Pizza' },
-  { emoji: '🌮', label: 'Wraps' },
+  { label: 'Biryani', emoji: '🍱' },
+  { label: 'Fast Food', emoji: '🍔' },
+  { label: 'Pizza', emoji: '🍕' },
+  { label: 'Karahi', emoji: '🍲' },
+  { label: 'Desserts', emoji: '🍰' },
+  { label: 'Drinks', emoji: '🥤' }
 ]
 
-/* ── Category Chip ───────────────────────────────────────────── */
-function CategoryChip({ emoji, label }) {
-  const navigate = useNavigate()
-  return (
-    <button 
-      onClick={() => navigate(`/search?q=${encodeURIComponent(label)}`)}
-      className="flex-shrink-0 flex flex-col items-center gap-2 group cursor-pointer"
-    >
-      <div className="w-16 h-16 rounded-2xl bg-[#f7ddd5] flex items-center justify-center group-hover:bg-[#ab3500]/10 transition-colors">
-        <span className="text-2xl">{emoji}</span>
-      </div>
-      <span className="text-xs font-semibold text-[#261814]">{label}</span>
-    </button>
-  )
-}
-
-/* ── Restaurant Card ─────────────────────────────────────────── */
-function RestaurantCard({ restaurant, onClick }) {
-  const { name, tags, rating, time, delivery, badge, img } = restaurant
-  return (
-    <div
-      onClick={onClick}
-      className="bg-white rounded-2xl overflow-hidden shadow-sm border border-[#e1bfb5]/30 cursor-pointer hover:shadow-md transition-shadow"
-    >
-      <div className="relative h-48">
-        <img src={img || 'https://images.unsplash.com/photo-1563379091339-03b21ab4a4f8?w=600&q=80'} alt={name} className="w-full h-full object-cover" />
-        <button className="absolute top-3 right-3 w-8 h-8 bg-white/80 backdrop-blur-sm rounded-full flex items-center justify-center" onClick={e => e.stopPropagation()}>
-          <Icon name="favorite" size={16} className="text-[#594139]" />
-        </button>
-        {badge && (
-          <div className="absolute bottom-3 left-3 bg-[#b7102a] text-white text-[10px] font-bold px-2 py-1 rounded-md">{badge}</div>
-        )}
-      </div>
-      <div className="p-4">
-        <div className="flex justify-between items-start">
-          <div>
-            <h4 className="font-bold text-[#261814] text-lg">{name}</h4>
-            <p className="text-[#594139] text-xs mt-1">{tags || 'Pakistani • Fast Food'}</p>
-          </div>
-          <div className="bg-[#c98f00]/10 px-2 py-1 rounded-lg flex items-center gap-1">
-            <Icon name="star" filled size={14} className="text-[#c98f00]" />
-            <span className="text-xs font-bold text-[#c98f00]">{rating || 5.0}</span>
-          </div>
-        </div>
-        <div className="flex items-center gap-4 mt-4 border-t border-[#e1bfb5]/20 pt-4">
-          <div className="flex items-center gap-1 text-[#594139]">
-            <Icon name="schedule" size={16} />
-            <span className="text-[10px] font-semibold">{time || '20-30 min'}</span>
-          </div>
-          <div className="flex items-center gap-1 text-[#594139]">
-            <Icon name="moped" size={16} />
-            <span className="text-[10px] font-semibold">{delivery || 'Rs. 50'}</span>
-          </div>
-        </div>
-      </div>
-    </div>
-  )
-}
-
-/* ── HomePage ────────────────────────────────────────────────── */
 export default function HomePage() {
   const navigate = useNavigate()
-  const [showNotifications, setShowNotifications] = useState(false)
-  const [notifications, setNotifications] = useState([])
+  const [searchQuery, setSearchQuery] = useState('')
   const [restaurants, setRestaurants] = useState([])
-  const [foods, setFoods] = useState([])
   const [loading, setLoading] = useState(true)
-  const [error, setError] = useState(null)
+  const [notifications, setNotifications] = useState([
+    { id: 1, title: 'Welcome to Food Genie!', message: 'Explore top approved restaurants in Vehari.', time: 'Just now', icon: 'celebration', read: false }
+  ])
+  const [showNotifications, setShowNotifications] = useState(false)
+  const [userData, setUserData] = useState({ name: 'Guest User', city: 'Vehari' })
 
   useEffect(() => {
-    const fetchData = async () => {
+    const fetchVendors = async () => {
       setLoading(true)
       try {
-        const [vRes, fRes] = await Promise.all([
-          API.get('/api/vendors').catch(() => ({ data: [] })),
-          API.get('/api/foods').catch(() => ({ data: [] }))
-        ])
-        
-        const mappedVendors = (vRes.data || []).map(v => ({
-          id: v.id,
-          name: v.name,
-          tags: `${v.category || 'Restaurant'} • ${v.city || 'Vehari'}`,
-          rating: v.rating || 5.0,
-          time: '20-30 min',
-          delivery: 'Rs. 50',
-          badge: v.is_approved ? 'OPEN NOW' : 'PENDING APPROVAL',
-          img: 'https://images.unsplash.com/photo-1563379091339-03b21ab4a4f8?w=600&q=80'
-        }))
-
-        setRestaurants(mappedVendors)
-        setFoods(fRes.data || [])
+        const res = await API.get('/api/vendors')
+        setRestaurants(res.data || [])
       } catch (err) {
-        setError(err.message)
         setRestaurants([])
       } finally {
         setLoading(false)
       }
     }
-    fetchData()
+    fetchVendors()
+
+    // Sync profile data
+    const localUser = JSON.parse(localStorage.getItem('user') || '{}')
+    if (localUser.name || localUser.email) {
+      setUserData({
+        name: localUser.name || localUser.email.split('@')[0],
+        city: localUser.city || 'Vehari'
+      })
+    }
+
+    API.get('/api/auth/me')
+      .then(res => {
+        if (res.data) {
+          setUserData({
+            name: res.data.name || res.data.email.split('@')[0],
+            city: res.data.city || 'Vehari'
+          })
+          localStorage.setItem('user', JSON.stringify(res.data))
+        }
+      })
+      .catch(() => {})
   }, [])
 
   const unreadCount = notifications.filter(n => !n.read).length
@@ -127,8 +70,6 @@ export default function HomePage() {
     setNotifications([])
   }
 
-  const [searchQuery, setSearchQuery] = useState('')
-
   const handleSearchSubmit = (e) => {
     e.preventDefault()
     if (searchQuery.trim()) {
@@ -138,15 +79,22 @@ export default function HomePage() {
 
   return (
     <div className="pb-28 min-h-screen bg-[#fff8f6]">
-      {/* Top Header */}
-      <header className="sticky top-0 z-40 bg-[#fff8f6]/80 backdrop-blur-md px-4 py-3 border-b border-[#e1bfb5]/20 flex items-center justify-between">
+      {/* Top Bar Header */}
+      <header className="sticky top-0 z-40 bg-[#fff8f6]/90 backdrop-blur-md px-4 py-3 flex items-center justify-between border-b border-[#e1bfb5]/20">
         <div className="flex items-center gap-2">
-          <div className="w-8 h-8 bg-white rounded-xl p-1 shadow-sm flex items-center justify-center border border-[#e1bfb5]/20">
-            <img src={logo} alt="Food Genie" className="w-full h-full object-contain" />
+          <div className="w-9 h-9 rounded-xl bg-[#fff1ed] text-[#ab3500] flex items-center justify-center font-bold shadow-sm">
+            <Icon name="restaurant" size={22} />
           </div>
-          <span className="font-extrabold text-[#ab3500] text-lg tracking-tight">Food Genie</span>
+          <div>
+            <h1 className="font-extrabold text-[#261814] text-lg leading-tight tracking-tight">Food Genie</h1>
+            <p className="text-[11px] font-semibold text-[#8d7168] flex items-center gap-1">
+              <Icon name="location_on" size={12} className="text-[#ab3500]" />
+              {userData.city || 'Vehari'}
+            </p>
+          </div>
         </div>
-        <div className="relative">
+
+        <div className="flex items-center gap-2 relative">
           <button 
             onClick={() => setShowNotifications(prev => !prev)}
             className="w-10 h-10 rounded-full bg-white border border-[#e1bfb5]/30 shadow-sm flex items-center justify-center text-[#594139] hover:bg-[#fff1ed] transition-colors relative cursor-pointer"
@@ -157,7 +105,7 @@ export default function HomePage() {
             )}
           </button>
 
-          {/* Notifications Modal Dropdown */}
+          {/* Notifications Dropdown */}
           {showNotifications && (
             <div className="absolute right-0 mt-2 w-80 bg-white rounded-2xl shadow-xl border border-[#e1bfb5]/30 z-50 overflow-hidden animate-in fade-in slide-in-from-top-2 duration-200">
               <div className="p-3 bg-[#fff1ed] border-b border-[#e1bfb5]/20 flex items-center justify-between">
@@ -229,7 +177,14 @@ export default function HomePage() {
           </div>
           <div className="flex gap-4 overflow-x-auto pb-2 scrollbar-none">
             {CATEGORIES.map((cat, i) => (
-              <CategoryChip key={i} emoji={cat.emoji} label={cat.label} />
+              <button
+                key={i}
+                onClick={() => navigate(`/search?q=${encodeURIComponent(cat.label)}`)}
+                className="flex items-center gap-2 px-4 py-2 bg-white border border-[#e1bfb5]/30 rounded-2xl shadow-sm text-xs font-bold text-[#261814] hover:bg-[#fff1ed] hover:border-[#ab3500] transition-all shrink-0 cursor-pointer"
+              >
+                <span>{cat.emoji}</span>
+                <span>{cat.label}</span>
+              </button>
             ))}
           </div>
         </section>
@@ -249,20 +204,36 @@ export default function HomePage() {
           ) : restaurants.length > 0 ? (
             <div className="space-y-4">
               {restaurants.map(r => (
-                <RestaurantCard
+                <div
                   key={r.id}
-                  restaurant={r}
                   onClick={() => navigate(`/restaurant/${r.id}`)}
-                />
+                  className="bg-white p-4 rounded-2xl border border-[#e1bfb5]/30 shadow-sm flex items-center justify-between gap-4 cursor-pointer hover:shadow-md transition-shadow"
+                >
+                  <div className="flex-1 min-w-0">
+                    <div className="flex items-center gap-2">
+                      <h4 className="font-bold text-[#261814] text-base truncate">{r.name}</h4>
+                      <span className="bg-emerald-100 text-emerald-800 text-[10px] font-extrabold px-2 py-0.5 rounded-full uppercase">Approved</span>
+                    </div>
+                    <p className="text-xs text-[#594139] mt-0.5">{r.category || 'Restaurant'} • {r.city || 'Vehari'}</p>
+                    <div className="flex items-center gap-3 mt-2 text-xs font-bold text-[#8d7168]">
+                      <span className="text-[#ab3500] flex items-center gap-0.5">★ {r.rating || '5.0'}</span>
+                      <span>20-30 min</span>
+                      <span>Rs. 50 delivery</span>
+                    </div>
+                  </div>
+                  <div className="w-16 h-16 rounded-2xl bg-[#fff1ed] text-[#ab3500] flex items-center justify-center font-bold text-2xl shrink-0">
+                    🏪
+                  </div>
+                </div>
               ))}
             </div>
           ) : (
-            <div className="bg-white p-8 rounded-3xl border border-[#e1bfb5]/30 text-center space-y-3 shadow-sm">
-              <div className="w-16 h-16 bg-[#fff1ed] rounded-2xl flex items-center justify-center mx-auto text-[#ab3500]">
+            <div className="bg-white p-8 rounded-3xl border border-[#e1bfb5]/30 text-center space-y-3 shadow-sm w-full flex flex-col items-center justify-center">
+              <div className="w-16 h-16 bg-[#fff1ed] rounded-2xl flex items-center justify-center text-[#ab3500]">
                 <Icon name="storefront" size={32} />
               </div>
               <h4 className="font-bold text-[#261814] text-base">No Approved Restaurants Yet</h4>
-              <p className="text-xs text-[#594139] max-w-xs mx-auto leading-relaxed">
+              <p className="text-xs text-[#594139] w-full max-w-md text-center leading-normal whitespace-normal break-words">
                 When new restaurants in Vehari register and receive admin approval, they will appear right here!
               </p>
             </div>

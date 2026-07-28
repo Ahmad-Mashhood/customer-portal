@@ -6,29 +6,6 @@ import API from '../api'
 
 const POPULAR_SEARCHES = ['Biryani', 'Burger', 'Pizza', 'Karahi', 'Dessert', 'Healthy']
 
-function getLevenshteinDistance(a, b) {
-  if (a.length === 0) return b.length
-  if (b.length === 0) return a.length
-
-  const matrix = []
-  for (let i = 0; i <= b.length; i++) matrix[i] = [i]
-  for (let j = 0; j <= a.length; j++) matrix[0][j] = j
-
-  for (let i = 1; i <= b.length; i++) {
-    for (let j = 1; j <= a.length; j++) {
-      if (b.charAt(i - 1) === a.charAt(j - 1)) {
-        matrix[i][j] = matrix[i - 1][j - 1]
-      } else {
-        matrix[i][j] = Math.min(
-          matrix[i - 1][j - 1] + 1,
-          Math.min(matrix[i][j - 1] + 1, matrix[i - 1][j] + 1)
-        )
-      }
-    }
-  }
-  return matrix[b.length][a.length]
-}
-
 function isFuzzyMatch(query, item) {
   const cleanQuery = query.toLowerCase().replace(/[^\w\s]/g, '').trim()
   if (!cleanQuery) return true
@@ -160,12 +137,12 @@ export default function SearchPage() {
             ))}
           </div>
         ) : (
-          <div className="bg-white p-8 rounded-3xl border border-[#e1bfb5]/30 text-center space-y-3 shadow-sm">
-            <div className="w-16 h-16 bg-[#fff1ed] rounded-2xl flex items-center justify-center mx-auto text-[#ab3500]">
+          <div className="bg-white p-8 rounded-3xl border border-[#e1bfb5]/30 text-center space-y-3 shadow-sm w-full flex flex-col items-center justify-center">
+            <div className="w-16 h-16 bg-[#fff1ed] rounded-2xl flex items-center justify-center text-[#ab3500]">
               <Icon name="search_off" size={32} />
             </div>
             <h4 className="font-bold text-[#261814] text-base">No Items Found</h4>
-            <p className="text-xs text-[#594139] max-w-xs mx-auto">
+            <p className="text-xs text-[#594139] w-full max-w-md text-center leading-normal whitespace-normal break-words">
               {query ? `No menu items matching "${query}".` : 'No food items available in the system yet. Registered restaurants will list their dishes here!'}
             </p>
           </div>
