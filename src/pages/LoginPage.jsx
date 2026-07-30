@@ -66,7 +66,7 @@ function OTPView({ onBack }) {
 }
 
 /* ── Login Form ──────────────────────────────────────────────── */
-function LoginForm({ onSuccess }) {
+function LoginForm({ onSuccess, onForgotClick }) {
   const [email, setEmail] = useState('')
   const [password, setPassword] = useState('')
   const [showPw, setShowPw] = useState(false)
@@ -93,9 +93,10 @@ function LoginForm({ onSuccess }) {
   }
 
   return (
-    <form onSubmit={handleLogin} className="space-y-5">
+    <form onSubmit={handleLogin} className="space-y-4">
       {error && (
-        <div className="p-3 bg-red-50 text-red-600 text-[14px] rounded-xl text-center font-medium">
+        <div className="p-3 bg-[#b7102a]/10 border border-[#b7102a]/20 rounded-xl text-[#b7102a] text-[13px] font-medium flex items-center gap-2">
+          <Icon name="error" size={18} />
           {error}
         </div>
       )}
@@ -119,7 +120,13 @@ function LoginForm({ onSuccess }) {
         <div className="space-y-1.5">
           <div className="flex justify-between items-center px-1">
             <label className="text-[14px] font-semibold text-[#261814]">Password</label>
-            <a className="text-[12px] font-bold text-[#ab3500] hover:underline" href="#">Forgot?</a>
+            <button
+              type="button"
+              onClick={onForgotClick}
+              className="text-[12px] font-bold text-[#ab3500] hover:underline cursor-pointer"
+            >
+              Forgot?
+            </button>
           </div>
           <div className="relative group">
             <Icon name="lock" className="absolute left-4 top-1/2 -translate-y-1/2 text-[#8d7168] group-focus-within:text-[#ab3500] transition-colors" />
@@ -260,6 +267,7 @@ function SignUpForm({ onSuccess }) {
 export default function LoginPage() {
   const [tab, setTab] = useState('login') // 'login' | 'signup'
   const [showOtp, setShowOtp] = useState(false)
+  const [isForgotOpen, setIsForgotOpen] = useState(false)
   const [googleLoading, setGoogleLoading] = useState(false)
   const [googleError, setGoogleError] = useState(null)
   const navigate = useNavigate()
@@ -377,7 +385,7 @@ export default function LoginPage() {
               {showOtp ? (
                 <OTPView onBack={() => setShowOtp(false)} />
               ) : tab === 'login' ? (
-                <LoginForm onSuccess={() => navigate('/home')} />
+                <LoginForm onSuccess={() => navigate('/home')} onForgotClick={() => setIsForgotOpen(true)} />
               ) : (
                 <SignUpForm onSuccess={() => navigate('/home')} />
               )}
@@ -442,6 +450,12 @@ export default function LoginPage() {
           </div>
         </div>
       </div>
+
+      <ForgotPasswordModal
+        isOpen={isForgotOpen}
+        onClose={() => setIsForgotOpen(false)}
+      />
     </main>
   )
 }
+
