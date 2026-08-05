@@ -18,7 +18,11 @@ import OrdersPage         from './pages/OrdersPage'
 import ProfilePage        from './pages/ProfilePage'
 import MockAuthPage       from './pages/MockAuthPage'
 
+import ForgotPasswordPage from './pages/ForgotPasswordPage'
+import ResetPasswordPage  from './pages/ResetPasswordPage'
+
 function TransitionLayout({ children, transitionStage }) {
+
   return (
     <div className="relative">
       <div className={transitionStage === "loading" ? "pointer-events-none select-none" : ""}>
@@ -109,7 +113,10 @@ function AppRoutes() {
         <Route path="/cart"             element={<CartPage />} />
         <Route path="/orders"           element={<OrdersPage />} />
         <Route path="/profile"          element={<ProfilePage />} />
+        <Route path="/forgot-password"  element={<ForgotPasswordPage />} />
+        <Route path="/reset-password"   element={<ResetPasswordPage />} />
         <Route path="/mock-auth/:provider" element={<MockAuthPage />} />
+
         {/* Fallback */}
         <Route path="*"                 element={<Navigate to="/" replace />} />
       </Routes>
