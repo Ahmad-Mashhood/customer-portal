@@ -4,6 +4,8 @@ import Icon from '../components/Icon'
 import logo from '../assets/logo_transparent.png'
 import API from '../api'
 import { loginWithGoogle } from '../api/googleAuth'
+import ForgotPasswordModal from '../components/ForgotPasswordModal'
+
 
 /* ── Google SVG ──────────────────────────────────────────────── */
 const GoogleSVG = () => (
